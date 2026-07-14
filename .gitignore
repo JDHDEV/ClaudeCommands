@@ -1,0 +1,9 @@
+# Personal Claude Code settings — never commit (may contain credentials in permission allow-lists)
+.claude/settings.json
+.claude/settings.local.json
+
+# Environment / secret files
+.env
+.env.*
+*.pem
+*.key
