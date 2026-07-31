@@ -171,6 +171,77 @@ Claude Code permission allow-lists like `Bash(git:*)` auto-approve *every* git c
 
 This is a personal-settings decision (settings files are yours and should never be committed to a shared repo — keep `.claude/settings.json` and `.claude/settings.local.json` gitignored), but this library recommends the deny-list wherever its git-touching skills are installed. Never put credentials in permission rules; anything in settings.json is plaintext on disk.
 
+### Keep Claude Off PR Merges and Closes
+
+A common preference is to let Claude do everything *up to* the point of no return — open PRs, push branches, run `git merge` locally — but hand the final "squash and merge" or "close" of a GitHub PR back to you. A `CLAUDE.md` line like *"Never merge/squash/close PRs — hand them off to me"* nudges this, but it's a soft instruction Claude can drift from. For a real gate, enforce it in `settings.json`.
+
+The key distinction is that a PR merge/close and a local branch merge are **different commands**, so you can block one without touching the other:
+
+- **PR merge/close** → `gh pr merge`, `gh pr close` (and `gh api`/`curl` to the `…/pulls/<n>/merge` endpoint)
+- **Local branch merge** → `git merge <branch>` — left fully allowed
+
+**Layer 1 — deny rules** (visible in `/permissions`, catches the direct CLI forms):
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr close:*)",
+      "PowerShell(gh pr merge:*)",
+      "PowerShell(gh pr close:*)"
+    ]
+  }
+}
+```
+
+**Layer 2 — a PreToolUse hook** (the airtight layer). Deny rules match only the *command prefix*, so they miss chained commands (`cd repo && gh pr merge`), extra whitespace, and the `gh api`/`curl` paths to the merge endpoint — and they are skipped entirely in bypass-permissions mode. A `PreToolUse` hook has none of those gaps: it sees the whole command and **still fires in bypass mode**. Point it at a small script that inspects the command and denies:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          { "type": "command", "command": "node ~/.claude/hooks/block-pr-merge.mjs" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+```js
+// ~/.claude/hooks/block-pr-merge.mjs — deny PR merge/close, allow local git merge
+let data = "";
+process.stdin.on("data", (c) => (data += c));
+process.stdin.on("end", () => {
+  let cmd = "";
+  try { cmd = ((JSON.parse(data) || {}).tool_input || {}).command || ""; } catch {}
+  const s = String(cmd).replace(/\s+/g, " ");
+  const block =
+    /\bgh\s+pr\s+(merge|close)\b/i.test(s) ||          // gh pr merge / close
+    /pulls\/[^\s"'`]+\/merge/i.test(s) ||              // gh api / curl to merge endpoint
+    (/pulls\/\d+/i.test(s) && /["']?state["']?\s*[:=]\s*["']?\s*closed/i.test(s)); // API close
+  if (block) {
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason:
+          "Policy: Claude may not merge or close GitHub PRs — hand this to the user. (Local `git merge` is still allowed.)",
+      },
+    }));
+  }
+  process.exit(0);
+});
+```
+
+The `matcher` covers both the Bash and PowerShell tools; if you have other `PreToolUse` hooks, add this as an additional entry rather than replacing them. After editing hooks, open `/hooks` once (or restart) so a running session reloads the config.
+
+**Known gap, stated honestly:** this covers everything Claude would actually type, but it can't catch a user-defined shell *alias* that wraps the merge (`alias shipit='gh pr merge'`) or a merge performed entirely in the GitHub web UI.
+
 ---
 
 ## Tips & Tricks
