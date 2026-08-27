@@ -51,6 +51,7 @@ A `CLAUDE.md` can pull in other files with `@path/to/file.md` imports, which kee
 2. Write the minimum code that solves the problem. Nothing speculative — no features "for later."
 3. Touch only what you must. Never reformat, rename, or "improve" code unrelated to the task.
 4. Define success criteria up front. Loop until the result is verified against them, then stop.
+5. Assume I have not read this session. Every response stands alone.
 
 ## Code
 - Match the style, naming, and idioms of the surrounding code — even if you'd write it differently.
@@ -65,6 +66,27 @@ A `CLAUDE.md` can pull in other files with `@path/to/file.md` imports, which kee
 - Lead with the outcome; supporting detail after.
 - Report failures plainly: failing tests, skipped steps, and unverified assumptions are results, not
   things to smooth over.
+
+## Standing context rule
+
+I work across many projects and lose the thread when I switch. Assume I have zero
+recall of anything earlier in the session - your prior messages, my prior requests,
+and decisions we already made.
+
+When presenting results, findings, or a question:
+- Name the subject. No bare "it", "that", "the fix", "as discussed", "like before".
+- Open with one line of orientation: what we are working on and where this fits.
+  Example: "<project> - you asked for <goal>; last step was <X>; here is the result."
+- Restate the decisions, constraints, and assumptions the answer depends on, even
+  if I set them minutes ago.
+- Write file paths, commands, and identifiers in full every time - never abbreviated
+  or referred to by position ("the second one", "that file above").
+- If you are resuming something, say what state it was left in before continuing.
+
+Scope: re-anchoring, not repetition. One or two lines of orientation, then the
+substance. A yes/no answer stays a yes/no answer, just with the subject named.
+This does not license padding, recaps of things I can see in the current message,
+or restating your own reasoning.
 ```
 
 The rules to prioritize are the ones that counter Claude's default failure modes: assuming instead of asking, over-building, drive-by refactoring, and declaring victory before verifying. Everything else is polish. The four Principles above are adapted from Noor Mohamad's *The 4-Line CLAUDE.md That Beats Your 40 Rules* [[1]](#sources--references).
