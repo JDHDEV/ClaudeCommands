@@ -91,6 +91,32 @@ or restating your own reasoning.
 
 The rules to prioritize are the ones that counter Claude's default failure modes: assuming instead of asking, over-building, drive-by refactoring, and declaring victory before verifying. Everything else is polish. The four Principles above are adapted from Noor Mohamad's *The 4-Line CLAUDE.md That Beats Your 40 Rules* [[1]](#sources--references).
 
+### Example Project Rule: Hand-Off Checklists as HTML
+
+Some work Claude can't finish for you — manual QA passes, visual verification, GUI setup steps, release gates. This rule fixes the format for that hand-off so the checklist survives across sessions instead of scrolling away in the terminal. Drop it into a project `CLAUDE.md` (or the global one if you want it everywhere) and adjust the `plans/` path to wherever the project keeps its planning docs.
+
+```markdown
+## Owner-facing instructions & checklists — HTML, not markdown
+
+When you still need to hand me a **set of instructions or a checklist to follow by hand** — after
+you have automated everything you can — (manual QA passes, visual verification checklists, release
+gate checklists, setup steps in a GUI tool), deliver it as a **standalone, self-contained HTML
+page**, not a markdown file:
+
+- One `.html` file in `plans/`, openable directly via `file://` with no server, no internet, no
+  external resources — all CSS and JS inline, system font stack.
+- Interactive checkboxes with progress tracking, persisted in `localStorage` (wrapped in
+  try/catch, with a reset button), so I can work through it across sessions.
+- Light/dark aware via `prefers-color-scheme`; readable on a second monitor while another
+  application has focus.
+- Content discipline: numbered steps, exact file/field/setting names, explicit PASS criteria, and
+  "expected, not a defect" callouts wherever correct behavior will look like a bug.
+- Send it to me with the file tool (rendered) when it's ready, and commit it like any other doc.
+
+Markdown stays the format for plans, design docs, and roadmaps — this rule is only for material
+I will *follow* step by step while working in another tool.
+```
+
 ## Using Skills
 
 Skills are reusable prompts that encode specific workflows. Each skill is a `SKILL.md` file in a directory named after the skill, living in `.claude/skills/<name>/` inside your project (project-level) or `~/.claude/skills/<name>/` (global).
