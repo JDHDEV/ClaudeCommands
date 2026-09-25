@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-13 — revised for the Claude 5 family (Fable 5). The original catalog is preserved below with build status; new sections cover capabilities that did not exist when this plan was first written and how to exploit them.
 
-> **Format note (2026-07-13, plan.2):** everything in this library that users invoke via `/name` is a **skill** — `skills/<name>/SKILL.md`, mirrored to `.claude/skills/<name>/SKILL.md`. The original `commands/*.md` format is retired. Every planned item below (`/scaffold`, `/migrate`, `/pr`, `/doc`, `/parallel-fix`, …) is to be built as `skills/<name>/SKILL.md`, validated by `scripts/validate-skills.ps1`.
+> **Format note (2026-07-13, plan.2):** everything in this library that users invoke via `/name` is a **skill** — `skills/<version>/<name>/SKILL.md` (current version: `skills/Fable-5/`), mirrored to `.claude/skills/<name>/SKILL.md`. The original `commands/*.md` format is retired. Every planned item below (`/scaffold`, `/migrate`, `/pr`, `/doc`, `/parallel-fix`, …) is to be built as `skills/Fable-5/<name>/SKILL.md`, validated by `scripts/validate-skills.ps1`.
 
 ## Status Snapshot
 
@@ -79,7 +79,7 @@ Claude Code now ships skills that overlap with parts of the original catalog. Cu
 
 Status legend: ✅ built · 🔲 planned · 🔁 superseded by a built-in (build only a thin team wrapper, if anything)
 
-All items below, built and planned, live as `skills/<name>/SKILL.md` (see the format note at the top).
+All items below, built and planned, live as `skills/Fable-5/<name>/SKILL.md` (see the format note at the top).
 
 ### 🔄 Git & Code Management
 

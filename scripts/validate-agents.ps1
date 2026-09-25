@@ -41,7 +41,7 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot  = Split-Path -Parent $scriptDir
 
-if (-not $CanonicalDir) { $CanonicalDir = Join-Path $repoRoot 'agents' }
+if (-not $CanonicalDir) { $CanonicalDir = Join-Path $repoRoot 'agents/Fable-5' }
 if (-not $InstallDir)   { $InstallDir   = Join-Path $repoRoot '.claude/agents' }
 
 $ValidModels    = @('haiku', 'sonnet', 'opus', 'fable', 'inherit')

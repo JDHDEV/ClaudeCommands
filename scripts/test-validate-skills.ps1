@@ -102,7 +102,7 @@ function Edit-BothTrees {
     # install trees of a case fixture, so the mutation doesn't itself trip the
     # byte-parity check (kept isolated to the rule under test).
     param([string]$CaseRoot, [string]$SkillName, [scriptblock]$Transform)
-    foreach ($rel in @("skills/$SkillName/SKILL.md", ".claude/skills/$SkillName/SKILL.md")) {
+    foreach ($rel in @("skills/Fable-5/$SkillName/SKILL.md", ".claude/skills/$SkillName/SKILL.md")) {
         $path = Join-Path $CaseRoot $rel
         $text = Get-FixtureText -Path $path
         $newText = & $Transform $text

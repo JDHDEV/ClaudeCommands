@@ -95,7 +95,7 @@ The rules to prioritize are the ones that counter Claude's default failure modes
 
 Skills are reusable prompts that encode specific workflows. Each skill is a `SKILL.md` file in a directory named after the skill, living in `.claude/skills/<name>/` inside your project (project-level) or `~/.claude/skills/<name>/` (global).
 
-> **Migration note:** this library previously shipped these workflows as `commands/*.md` (the older `.claude/commands/` format). They are now skills under `skills/` — same `/name` invocations, same behavior, newer format. If you installed the old commands, delete them from `.claude/commands/` when installing the skills so a stale copy cannot shadow the new one (when a command and a skill share a name, the skill wins).
+> **Migration note:** this library previously shipped these workflows as `commands/*.md` (the older `.claude/commands/` format). They are now skills under `skills/Fable-5/` — same `/name` invocations, same behavior, newer format. If you installed the old commands, delete them from `.claude/commands/` when installing the skills so a stale copy cannot shadow the new one (when a command and a skill share a name, the skill wins).
 
 ### How to Invoke
 
@@ -106,20 +106,20 @@ Type `/skill-name` in a Claude Code session. This library currently ships seven 
 - `/code-review-plan` — multi-perspective code review of a target that produces a remediation plan
 - `/test-review-plan` — run the full test suite and write a plan to fix every failure
 
-Each planning skill also has a `_sa` (subagent) variant — `/plan_sa`, `/code-review-plan_sa`, `/test-review-plan_sa` — that orchestrates the same workflow across the specialized agents in `agents/` instead of doing the analysis in one context.
+Each planning skill also has a `_sa` (subagent) variant — `/plan_sa`, `/code-review-plan_sa`, `/test-review-plan_sa` — that orchestrates the same workflow across the specialized agents in `agents/Fable-5/` instead of doing the analysis in one context.
 
 ### Installing Skills from This Repo
 
-Copy the skill directories from `skills/` into your project's `.claude/skills/` directory (and the agents — the `_sa` skills delegate to them by name):
+Copy the skill directories from `skills/Fable-5/` into your project's `.claude/skills/` directory (and the agents — the `_sa` skills delegate to them by name):
 
 ```bash
 # Project-level (available only in this project)
-cp -r skills/* your-project/.claude/skills/
-cp agents/*.md your-project/.claude/agents/
+cp -r skills/Fable-5/* your-project/.claude/skills/
+cp agents/Fable-5/*.md your-project/.claude/agents/
 
 # Global (available in all projects)
-cp -r skills/* ~/.claude/skills/
-cp agents/*.md ~/.claude/agents/
+cp -r skills/Fable-5/* ~/.claude/skills/
+cp agents/Fable-5/*.md ~/.claude/agents/
 ```
 
 The skills work without the agents pack installed — every subagent spawn carries a fallback clause to the built-in generic types — but the tool restrictions (read-only reviewers/auditors) are only enforced when the real agents are present.
@@ -160,10 +160,10 @@ Agents are specialized sub-processes with restricted tools, focused system promp
 
 ```bash
 # Project-level
-cp agents/*.md your-project/.claude/agents/
+cp agents/Fable-5/*.md your-project/.claude/agents/
 
 # Global
-cp agents/*.md ~/.claude/agents/
+cp agents/Fable-5/*.md ~/.claude/agents/
 ```
 
 ### Agent Design Principles

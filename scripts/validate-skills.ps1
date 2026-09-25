@@ -61,9 +61,9 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $RepoRoot) { $RepoRoot = Split-Path -Parent $scriptDir }
 
-$SkillsDir           = Join-Path $RepoRoot 'skills'
+$SkillsDir           = Join-Path $RepoRoot 'skills/Fable-5'
 $InstallSkillsDir    = Join-Path $RepoRoot '.claude/skills'
-$AgentsDir           = Join-Path $RepoRoot 'agents'
+$AgentsDir           = Join-Path $RepoRoot 'agents/Fable-5'
 $CommandsDir         = Join-Path $RepoRoot 'commands'
 $InstallCommandsDir  = Join-Path $RepoRoot '.claude/commands'
 

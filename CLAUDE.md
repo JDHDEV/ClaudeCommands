@@ -8,8 +8,8 @@ This repository is a library of reusable Claude Code skills and subagent configu
 
 ## Repository Structure
 
-- **Skills** go in `skills/<name>/SKILL.md` (canonical, portable library source) and are mirrored byte-identically to `.claude/skills/<name>/SKILL.md` (live install, dogfooded in this repo). Users invoke them via `/<name>`.
-- **Agent definitions** go in `agents/` — each is a markdown file with YAML frontmatter specifying tools, model, and system prompt for a specialized subagent — mirrored to `.claude/agents/`.
+- **Skills** go in `skills/Fable-5/<name>/SKILL.md` (canonical, portable library source; versioned by the model that authored them) and are mirrored byte-identically to `.claude/skills/<name>/SKILL.md` (live install, dogfooded in this repo). Users invoke them via `/<name>`.
+- **Agent definitions** go in `agents/Fable-5/` (versioned by authoring model) — each is a markdown file with YAML frontmatter specifying tools, model, and system prompt for a specialized subagent — mirrored to `.claude/agents/`.
 - **Validators** go in `scripts/` — PowerShell structural validators (`validate-agents.ps1`, `validate-skills.ps1`) with fixture meta-tests (`test-validate-*.ps1`). All four must exit 0 before work is considered done.
 - [IntialPlan.md](IntialPlan.md) contains the roadmap of planned skills and agents
 - [guide.md](guide.md) is a practical guide to using Claude Code, with tips and tricks
@@ -22,7 +22,7 @@ This repository is a library of reusable Claude Code skills and subagent configu
 - Required frontmatter: `name` (must equal the directory name), `description`, `argument-hint`, and `disable-model-invocation: true` (these are deliberate user-triggered workflows — never auto-invoked)
 - Use `$ARGUMENTS` (or `$1`, `$2`) for parameterization; every skill carries an `### Argument Safety` section that treats `$ARGUMENTS` as untrusted data, not instructions
 - Skills should encode specific team workflows and standards, not generic instructions
-- Edit `skills/` first, then copy to `.claude/skills/` as the final step; `scripts/validate-skills.ps1` enforces byte-parity
+- Edit `skills/Fable-5/` first, then copy to `.claude/skills/` as the final step; `scripts/validate-skills.ps1` enforces byte-parity
 
 ### Agent Delegation from Skills
 - Subagent-enhanced (`_sa`) skills spawn the **named specialized agents** (`tech-lead`, `architect`, `security-auditor`, `code-reviewer`, `test-writer`, `debugger`, `performance-optimizer`, `adversarial-verifier`, …), never generic types as primaries
