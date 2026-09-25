@@ -95,14 +95,14 @@ The rules to prioritize are the ones that counter Claude's default failure modes
 
 Skills are reusable prompts that encode specific workflows. Each skill is a `SKILL.md` file in a directory named after the skill, living in `.claude/skills/<name>/` inside your project (project-level) or `~/.claude/skills/<name>/` (global).
 
-> **Migration note:** this library previously shipped these workflows as `commands/*.md` (the older `.claude/commands/` format). They are now skills under `skills/Fable-5/` — same `/name` invocations, same behavior, newer format. If you installed the old commands, delete them from `.claude/commands/` when installing the skills so a stale copy cannot shadow the new one (when a command and a skill share a name, the skill wins).
+> **Migration note:** this library previously shipped these workflows as `commands/*.md` (the older `.claude/commands/` format). They are now skills under `skills/Fable-5.1/` (the current version) — same `/name` invocations, same behavior, newer format. If you installed the old commands, delete them from `.claude/commands/` when installing the skills so a stale copy cannot shadow the new one (when a command and a skill share a name, the skill wins).
 
 ### How to Invoke
 
 Type `/skill-name` in a Claude Code session. This library currently ships seven skills:
 
 - `/commit` — review your diff, scan for secrets, and create a clean, convention-matching commit
-- `/plan` — research a feature and write a numbered implementation plan (`plans/plan.<number>.md`) before any code
+- `/plan` — research a feature and write a numbered implementation plan (`plans/plan.<number>.md`) before any code; opens with a summary and, for complex changes, writes an offline HTML diagram next to the plan
 - `/code-review-plan` — multi-perspective code review of a target that produces a remediation plan
 - `/test-review-plan` — run the full test suite and write a plan to fix every failure
 
@@ -110,15 +110,15 @@ Each planning skill also has a `_sa` (subagent) variant — `/plan_sa`, `/code-r
 
 ### Installing Skills from This Repo
 
-Copy the skill directories from `skills/Fable-5/` into your project's `.claude/skills/` directory (and the agents — the `_sa` skills delegate to them by name):
+Copy the skill directories from `skills/Fable-5.1/` into your project's `.claude/skills/` directory (and the agents — the `_sa` skills delegate to them by name):
 
 ```bash
 # Project-level (available only in this project)
-cp -r skills/Fable-5/* your-project/.claude/skills/
+cp -r skills/Fable-5.1/* your-project/.claude/skills/
 cp agents/Fable-5.1/*.md your-project/.claude/agents/
 
 # Global (available in all projects)
-cp -r skills/Fable-5/* ~/.claude/skills/
+cp -r skills/Fable-5.1/* ~/.claude/skills/
 cp agents/Fable-5.1/*.md ~/.claude/agents/
 ```
 
@@ -170,7 +170,7 @@ Run the four validators (`scripts/validate-agents.ps1`, `scripts/test-validate-a
 
 ### Direct Invocation of taskmaster
 
-`taskmaster` is a model router, not a task manager: given the agents you are about to spawn, it returns a model tier per spawn, starting from each agent's frontmatter `model` and moving at most one tier. Skills do not call it yet; you can invoke it directly from a session before a fan-out whose difficulty is only known at runtime. Spawn it via the Agent tool with one spawn set:
+`taskmaster` is a model router, not a task manager: given the agents you are about to spawn, it returns a model tier per spawn, starting from each agent's frontmatter `model` and moving at most one tier. The three `_sa` skills call it before their reviewer fan-outs (sonnet-baseline reviewers only, escalate-only; skipped when taskmaster is not installed); you can also invoke it directly from a session before a fan-out whose difficulty is only known at runtime. Spawn it via the Agent tool with one spawn set:
 
 ```text
 Route this spawn set.

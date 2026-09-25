@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-13 — revised for the Claude 5 family (Fable 5). The original catalog is preserved below with build status; new sections cover capabilities that did not exist when this plan was first written and how to exploit them.
 
-> **Format note (2026-07-13, plan.2):** everything in this library that users invoke via `/name` is a **skill** — `skills/<version>/<name>/SKILL.md` (current version: `skills/Fable-5/`), mirrored to `.claude/skills/<name>/SKILL.md`. The original `commands/*.md` format is retired. Every planned item below (`/scaffold`, `/migrate`, `/pr`, `/doc`, `/parallel-fix`, …) is to be built as `skills/Fable-5/<name>/SKILL.md`, validated by `scripts/validate-skills.ps1`. Agents follow the same versioning: agents/<version>/<name>.md (current version: agents/Fable-5.1/), mirrored to .claude/agents/<name>.md.
+> **Format note (2026-07-13, plan.2):** everything in this library that users invoke via `/name` is a **skill** — `skills/<version>/<name>/SKILL.md` (current version: `skills/Fable-5.1/`; `skills/Fable-5/` is the frozen snapshot), mirrored to `.claude/skills/<name>/SKILL.md`. The original `commands/*.md` format is retired. Every planned item below (`/scaffold`, `/migrate`, `/pr`, `/doc`, `/parallel-fix`, …) is to be built as `skills/Fable-5.1/<name>/SKILL.md`, validated by `scripts/validate-skills.ps1`. Agents follow the same versioning: agents/<version>/<name>.md (current version: agents/Fable-5.1/), mirrored to .claude/agents/<name>.md.
 
 ## Status Snapshot
 
@@ -81,13 +81,13 @@ Claude Code now ships skills that overlap with parts of the original catalog. Cu
 
 Status legend: ✅ built · 🔲 planned · 🔁 superseded by a built-in (build only a thin team wrapper, if anything)
 
-All items below, built and planned, live as `skills/Fable-5/<name>/SKILL.md` (see the format note at the top).
+All items below, built and planned, live as `skills/Fable-5.1/<name>/SKILL.md` (see the format note at the top).
 
 ### 🔄 Git & Code Management
 
 | Skill | Status | Purpose & Fable-era notes |
 |---|---|---|
-| `/commit` | ✅ | Smart commit — reviews diffs for TODOs, test flags, commented-out code, then stages and commits with a generated message (no Claude attribution). **Upgrade:** invoke `/verify` before committing nontrivial changes. |
+| `/commit` | ✅ | Smart commit — reviews diffs for TODOs, test flags, commented-out code, then stages and commits with a generated message (no Claude attribution). **Upgrade:** invoke `/verify` before committing nontrivial changes. *(plan.4: verify step — recommends `/verify`, else a confirmed manifest test command; commit message passed as data)* |
 | `/pr` | 🔲 | Creates a PR: branches, commits, formats, writes description from diff context via `gh`. |
 | `/catchup` | 🔲 | Rebuilds context after `/clear`: uncommitted changes + recent commits + **persistent memory** of in-flight work. Should also *write* a session-state memory so the next catchup is richer. |
 | `/review` | 🔁 | Use built-in `/code-review` (choose effort level; `ultra` for branch-wide multi-agent review). Custom wrapper only if team checklist items emerge that the built-in misses. |
@@ -97,8 +97,8 @@ All items below, built and planned, live as `skills/Fable-5/<name>/SKILL.md` (se
 
 | Skill | Status | Purpose & Fable-era notes |
 |---|---|---|
-| `/plan <feature>` | ✅ | Research & plan before writing code; saves `plans/plan.<n>.md` with success criteria (incl. unit tests), a post-implementation code-review pass, and a self-contained execution prompt for a fresh context. |
-| `/plan_sa <feature>` | ✅ | Subagent-enhanced `/plan` (tech-lead gut-check, parallel architect/security/test research, reviewer pass). **Phase 3 upgrade:** AskUserQuestion for scope ambiguity up front; judge panel (2–3 independent designs, scored, synthesized) for wide solution spaces; structured outputs instead of prose hand-offs; `fable` for the synthesis step. |
+| `/plan <feature>` | ✅ | Research & plan before writing code; saves `plans/plan.<n>.md` with success criteria (incl. unit tests), a post-implementation code-review pass, and a self-contained execution prompt for a fresh context. *(plan.4: AskUserQuestion for scope; Summary block; `plans/plan.<n>.diagram.html` above a complexity threshold)* |
+| `/plan_sa <feature>` | ✅ | Subagent-enhanced `/plan` (tech-lead gut-check, parallel architect/security/test research, reviewer pass). **Phase 3 upgrade:** AskUserQuestion for scope ambiguity up front; judge panel (2–3 independent designs, scored, synthesized) for wide solution spaces; structured outputs instead of prose hand-offs; `fable` for the synthesis step. *(plan.4: AskUserQuestion, structured returns, taskmaster routing, Summary + diagram done; judge panel and fable synthesis deferred to the Workflow pass)* |
 | `/scaffold <type>` | 🔲 | Boilerplate for routes, components, services — auto-detects stack. Route to `haiku`, effort `low`. |
 | `/refactor <file>` | 🔲 | Defer quality cleanups to built-in `/simplify`; custom skill adds structural refactors (extract module, invert dependency) that `/simplify` won't attempt. Verify with `/verify` after. |
 | `/fix <issue-number>` | 🔲 | Reads a GitHub issue (`gh issue view`), implements the fix with tests, runs `/verify`, links the issue in the commit. |
@@ -115,9 +115,9 @@ All items below, built and planned, live as `skills/Fable-5/<name>/SKILL.md` (se
 | `/lint-fix` | 🔁→hook | Same: auto-format on edit via hook. |
 | `/dep-check` | 🔲 | Vulnerabilities, outdated versions, licenses. Primary form: **weekly scheduled routine** with a summary report; skill form for on-demand runs. |
 | `/test-review-plan` | ✅ | Run all unit tests, multi-perspective review of results, produce numbered fix plan (`plans/plan.<n>.md`) with execution prompt; plan complete only when all tests pass. |
-| `/test-review-plan_sa` | ✅ | Subagent variant. **Phase 3 upgrade:** Workflow pipeline — run suite once, fan out one analysis agent *per failure cluster* with structured output (root cause, fix, affected files), adversarially verify root causes before they enter the plan. |
+| `/test-review-plan_sa` | ✅ | Subagent variant. **Phase 3 upgrade:** Workflow pipeline — run suite once, fan out one analysis agent *per failure cluster* with structured output (root cause, fix, affected files), adversarially verify root causes before they enter the plan. *(plan.4: per-cluster debugger fan-out with structured output, gate widened to security/performance findings, taskmaster routing; Workflow pipeline deferred)* |
 | `/code-review-plan` | ✅ | Multi-perspective review of components or whole project → numbered fix plan with execution prompt. |
-| `/code-review-plan_sa` | ✅ | Subagent variant. **Phase 3 upgrade:** the canonical Workflow review shape — dimension finders (bugs/security/perf/tests) → dedup → adversarial verify (majority-refute kills a finding) → synthesize plan. Fewer false findings in plans means less wasted execution time. |
+| `/code-review-plan_sa` | ✅ | Subagent variant. **Phase 3 upgrade:** the canonical Workflow review shape — dimension finders (bugs/security/perf/tests) → dedup → adversarial verify (majority-refute kills a finding) → synthesize plan. Fewer false findings in plans means less wasted execution time. *(plan.4: structured finder output, dedup, widened gate, taskmaster routing; majority-refute and Workflow deferred)* |
 
 ### 📖 Documentation & Communication
 
@@ -225,9 +225,10 @@ All 15 agents are ✅ built; the current canonical set is agents/Fable-5.1/ (16 
 - ✅ Add **adversarial-verifier** and **workflow-author** agents. *(Done in plan.1, both `model: fable`, read-only.)*
 - ✅ Upgrade the three `_sa` skills to delegate to the real specialized agents. *(Done in plan.2, 2026-07-13: every spawn in `plan_sa`, `test-review-plan_sa`, `code-review-plan_sa` now names the specialized agent — tech-lead, architect, security-auditor, code-reviewer, test-writer, debugger, performance-optimizer — with a graceful fallback clause to Explore/Plan/general-purpose; adversarial-verifier gates Critical/Warning findings and claimed root causes; conditional domain routing added for database-architect, api-designer, frontend-specialist, devops-engineer.)*
 - ✅ **Fable-5.1 agent pass** *(plan.3: agents copied to agents/Fable-5.1/, per-agent enhancements traced to the §3 purpose column, taskmaster built; validators and install docs repointed; agents/Fable-5/ frozen.)*
+- ✅ **Fable-5.1 skill pass** *(plan.4: skills copied to skills/Fable-5.1/, per-skill enhancements traced to the §2 purpose column, taskmaster wired into the three _sa skills, /plan and /plan_sa gain a Summary block and a conditional HTML diagram; validators and install docs repointed; skills/Fable-5/ frozen.)*
 - Upgrade the `_sa` skills further with Workflow orchestration: structured outputs, judge panel in `/plan_sa`, AskUserQuestion for scope, `fable` synthesis.
 - Build `/parallel-fix` and `/migrate` on worktree isolation.
-- Wire **taskmaster** into the _sa skills and Workflow scripts: one "Routing (optional)" paragraph per _sa skill (first adopter: test-review-plan_sa per-failure-cluster analysis), Agent-tool `model` parameter / agent() `opts.model` + `opts.effort`; then consider independent effort routing, a frontmatter `effort:` default per agent (a native subagent field per the Claude Code docs; needs a validator rule and precedence check vs opts.effort first), and the `stands_in_for` / `prior_attempts` inputs deferred from plan.3.
+- Wire **taskmaster** into Workflow scripts (agent() `opts.model` + `opts.effort`) — the three _sa skills are wired as of plan.4 (one "Routing (optional)" subsection each; sonnet-baseline reviewers only, escalate-only, applied through the Agent-tool `model` parameter; per-failure-cluster debugger spawns are not routed because debugger is `inherit`, per §3 "When to call") — then consider independent effort routing, a frontmatter `effort:` default per agent (a native subagent field per the Claude Code docs; needs a validator rule and precedence check vs opts.effort first), and the `stands_in_for` / `prior_attempts` inputs deferred from plan.3.
 
 **Phase 4 — Automation & unattended runs**
 - Scheduled routines: nightly security review, weekly `/dep-check`, test-health report.
