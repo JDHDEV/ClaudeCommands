@@ -10,7 +10,8 @@
     - passes (exit 0) on a clean pair, and
     - fails (exit non-zero) with the expected message for each rule: parse error,
       missing key, name/filename mismatch, invalid model, read-only tool violation,
-      missing Subagent Contract, sync drift, and orphaned install file.
+      missing Subagent Contract, sync drift, orphaned install file, and
+      exact-tool-set violation (extra or missing tool).
 
   Exits 0 only if every assertion holds.
 #>
@@ -154,6 +155,21 @@ Assert-Case -TestName 'missing counterpart fires' -ExpectedCode 1 -ExpectedSubst
 $d = New-FixturePair -TestName 't9-parse-error' -FileName 'debugger.md' `
     -CanonicalContent (New-AgentContent -Name 'debugger' -WithFrontmatter $false)
 Assert-Case -TestName 'frontmatter parse error fires' -ExpectedCode 1 -ExpectedSubstring 'frontmatter parse error' -Dirs $d
+
+# --- T10: exact tool set - extra tool fires ---
+$d = New-FixturePair -TestName 't10-exact-tools-extra' -FileName 'taskmaster.md' `
+    -CanonicalContent (New-AgentContent -Name 'taskmaster' -Tools @('Read', 'Grep', 'Glob', 'Bash'))
+Assert-Case -TestName 'exact tool set: extra tool fires' -ExpectedCode 1 -ExpectedSubstring 'tool set must be exactly' -Dirs $d
+
+# --- T11: exact tool set - exact set passes ---
+$d = New-FixturePair -TestName 't11-exact-tools-ok' -FileName 'taskmaster.md' `
+    -CanonicalContent (New-AgentContent -Name 'taskmaster' -Tools @('Read', 'Grep', 'Glob'))
+Assert-Case -TestName 'exact tool set: exact set passes' -ExpectedCode 0 -ExpectedSubstring 'PASS' -Dirs $d
+
+# --- T12: exact tool set - missing tool fires ---
+$d = New-FixturePair -TestName 't12-exact-tools-missing' -FileName 'taskmaster.md' `
+    -CanonicalContent (New-AgentContent -Name 'taskmaster' -Tools @('Read', 'Grep'))
+Assert-Case -TestName 'exact tool set: missing tool fires' -ExpectedCode 1 -ExpectedSubstring 'tool set must be exactly' -Dirs $d
 
 # --- Report ---
 Write-Host ""

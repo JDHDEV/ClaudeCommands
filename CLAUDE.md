@@ -9,7 +9,7 @@ This repository is a library of reusable Claude Code skills and subagent configu
 ## Repository Structure
 
 - **Skills** go in `skills/Fable-5/<name>/SKILL.md` (canonical, portable library source; versioned by the model that authored them) and are mirrored byte-identically to `.claude/skills/<name>/SKILL.md` (live install, dogfooded in this repo). Users invoke them via `/<name>`.
-- **Agent definitions** go in `agents/Fable-5/` (versioned by authoring model) — each is a markdown file with YAML frontmatter specifying tools, model, and system prompt for a specialized subagent — mirrored to `.claude/agents/`.
+- **Agent definitions** go in `agents/Fable-5.1/` (the current version, versioned by authoring model) — each is a markdown file with YAML frontmatter specifying tools, model, and system prompt for a specialized subagent — mirrored to `.claude/agents/`. `agents/Fable-5/` is the frozen Fable-5-authored snapshot: never edited, not mirrored, not validated.
 - **Validators** go in `scripts/` — PowerShell structural validators (`validate-agents.ps1`, `validate-skills.ps1`) with fixture meta-tests (`test-validate-*.ps1`). All four must exit 0 before work is considered done.
 - [IntialPlan.md](IntialPlan.md) contains the roadmap of planned skills and agents
 - [guide.md](guide.md) is a practical guide to using Claude Code, with tips and tricks
@@ -31,9 +31,10 @@ This repository is a library of reusable Claude Code skills and subagent configu
 
 ### Agent Definitions
 - Agents are markdown files with YAML frontmatter placed in `.claude/agents/` or `~/.claude/agents/`
-- Frontmatter controls: `tools` (restrict to minimum needed), `model` (sonnet/opus/inherit), and system prompt
+- Frontmatter controls: `tools` (restrict to minimum needed), `model` (haiku/sonnet/opus/fable/inherit), and system prompt
 - Read-only agents (reviewers, auditors) must NOT have `Write` or `Edit` tools
 - Use `model: sonnet` for cheaper exploratory agents, `model: opus` for high-stakes analysis
+- The frontmatter `model` is the static default; the `taskmaster` agent may route a specific spawn one tier up or down at runtime (advisory; callers clamp)
 
 ## Design Principles
 

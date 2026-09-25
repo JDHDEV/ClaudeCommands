@@ -11,7 +11,7 @@
     (b) frontmatter parses between --- fences; non-empty name/description; name equals the
         directory name; description longer than 20 chars; disable-model-invocation: true
     (c) $ARGUMENTS appears in every skill body
-    (d) phantom-agent check: every subagent_type: value resolves to an agents/*.md stem or
+    (d) phantom-agent check: every subagent_type: value resolves to an agents/Fable-5.1/*.md stem or
         the builtin allowlist (Explore, Plan, general-purpose). Also covers three more
         structural contexts where an agent name is referenced outside a subagent_type:
         line: "Specialist Agent Roster" bullets ("- **name** — description"), backticked
@@ -63,7 +63,7 @@ if (-not $RepoRoot) { $RepoRoot = Split-Path -Parent $scriptDir }
 
 $SkillsDir           = Join-Path $RepoRoot 'skills/Fable-5'
 $InstallSkillsDir    = Join-Path $RepoRoot '.claude/skills'
-$AgentsDir           = Join-Path $RepoRoot 'agents/Fable-5'
+$AgentsDir           = Join-Path $RepoRoot 'agents/Fable-5.1'
 $CommandsDir         = Join-Path $RepoRoot 'commands'
 $InstallCommandsDir  = Join-Path $RepoRoot '.claude/commands'
 

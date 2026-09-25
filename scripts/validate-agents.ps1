@@ -5,20 +5,24 @@
 
 .DESCRIPTION
   This is the "unit test" for a markdown-config repository. It checks every
-  agents/*.md and .claude/agents/*.md for:
+  agents/Fable-5.1/*.md and .claude/agents/*.md for:
     (a) frontmatter that parses between --- fences
     (b) required keys: name, description, tools, model
     (c) name equals the filename stem
     (d) model in {haiku, sonnet, opus, fable, inherit}
     (e) read-only agents carry no Write/Edit tool
-    (f) every agents/*.md has an identical counterpart in .claude/agents/
+    (f) every agents/Fable-5.1/*.md has an identical counterpart in .claude/agents/
     (g) the body contains a "## Subagent Contract" heading
+    (h) exact-tool-set agents (taskmaster) carry precisely their expected tools:
+        no extra tool, no missing tool
 
   Exits non-zero and prints a per-file, per-rule failure list on any violation.
 
 .PARAMETER CanonicalDir
-  The canonical agent library directory. Defaults to <repo>/agents. Overridable so
-  the ruleset can be exercised against known-bad fixtures (see test-validate-agents.ps1).
+  The canonical agent library directory. Defaults to <repo>/agents/Fable-5.1 (the
+  current version; the older Fable-5 folder is a frozen snapshot that is not validated).
+  Overridable so the ruleset can be exercised against known-bad fixtures (see
+  test-validate-agents.ps1).
 
 .PARAMETER InstallDir
   The live-install agent directory. Defaults to <repo>/.claude/agents.
@@ -41,11 +45,13 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot  = Split-Path -Parent $scriptDir
 
-if (-not $CanonicalDir) { $CanonicalDir = Join-Path $repoRoot 'agents/Fable-5' }
+if (-not $CanonicalDir) { $CanonicalDir = Join-Path $repoRoot 'agents/Fable-5.1' }
 if (-not $InstallDir)   { $InstallDir   = Join-Path $repoRoot '.claude/agents' }
 
 $ValidModels    = @('haiku', 'sonnet', 'opus', 'fable', 'inherit')
-$ReadOnlyAgents = @('code-reviewer', 'security-auditor', 'tech-lead', 'architect', 'adversarial-verifier', 'workflow-author')
+$ReadOnlyAgents = @('code-reviewer', 'security-auditor', 'tech-lead', 'architect', 'adversarial-verifier', 'workflow-author', 'release-manager', 'taskmaster')
+# (h) agents whose tool set must match exactly (order-insensitive): no extras, no omissions.
+$ExactToolAgents = @{ 'taskmaster' = @('Read', 'Grep', 'Glob') }
 
 $failures = New-Object System.Collections.Generic.List[string]
 
@@ -159,6 +165,18 @@ function Test-AgentFile {
             if ($t -eq 'Write' -or $t -eq 'Edit') {
                 Add-Failure $Path "read-only agent must not grant tool '$t'"
             }
+        }
+    }
+
+    # (h) exact-tool-set agents: the parsed tools must equal the expected set
+    #     (order-insensitive); any extra or missing tool is a failure.
+    if ($ExactToolAgents.ContainsKey($stem)) {
+        $expected = @($ExactToolAgents[$stem])
+        $actual   = @($fm.Tools)
+        $extra    = @($actual   | Where-Object { $expected -notcontains $_ })
+        $missing  = @($expected | Where-Object { $actual   -notcontains $_ })
+        if ($extra.Count -gt 0 -or $missing.Count -gt 0) {
+            Add-Failure $Path "tool set must be exactly {$($expected -join ', ')}; found '$($actual -join ', ')'"
         }
     }
 

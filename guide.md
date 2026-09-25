@@ -106,7 +106,7 @@ Type `/skill-name` in a Claude Code session. This library currently ships seven 
 - `/code-review-plan` — multi-perspective code review of a target that produces a remediation plan
 - `/test-review-plan` — run the full test suite and write a plan to fix every failure
 
-Each planning skill also has a `_sa` (subagent) variant — `/plan_sa`, `/code-review-plan_sa`, `/test-review-plan_sa` — that orchestrates the same workflow across the specialized agents in `agents/Fable-5/` instead of doing the analysis in one context.
+Each planning skill also has a `_sa` (subagent) variant — `/plan_sa`, `/code-review-plan_sa`, `/test-review-plan_sa` — that orchestrates the same workflow across the specialized agents in `agents/Fable-5.1/` instead of doing the analysis in one context.
 
 ### Installing Skills from This Repo
 
@@ -115,11 +115,11 @@ Copy the skill directories from `skills/Fable-5/` into your project's `.claude/s
 ```bash
 # Project-level (available only in this project)
 cp -r skills/Fable-5/* your-project/.claude/skills/
-cp agents/Fable-5/*.md your-project/.claude/agents/
+cp agents/Fable-5.1/*.md your-project/.claude/agents/
 
 # Global (available in all projects)
 cp -r skills/Fable-5/* ~/.claude/skills/
-cp agents/Fable-5/*.md ~/.claude/agents/
+cp agents/Fable-5.1/*.md ~/.claude/agents/
 ```
 
 The skills work without the agents pack installed — every subagent spawn carries a fallback clause to the built-in generic types — but the tool restrictions (read-only reviewers/auditors) are only enforced when the real agents are present.
@@ -160,16 +160,38 @@ Agents are specialized sub-processes with restricted tools, focused system promp
 
 ```bash
 # Project-level
-cp agents/Fable-5/*.md your-project/.claude/agents/
+cp agents/Fable-5.1/*.md your-project/.claude/agents/
 
 # Global
-cp agents/Fable-5/*.md ~/.claude/agents/
+cp agents/Fable-5.1/*.md ~/.claude/agents/
 ```
+
+Run the four validators (`scripts/validate-agents.ps1`, `scripts/test-validate-agents.ps1`, `scripts/validate-skills.ps1`, `scripts/test-validate-skills.ps1`) before any global install, so an over-privileged or out-of-sync agent is never copied into every project at once.
+
+### Direct Invocation of taskmaster
+
+`taskmaster` is a model router, not a task manager: given the agents you are about to spawn, it returns a model tier per spawn, starting from each agent's frontmatter `model` and moving at most one tier. Skills do not call it yet; you can invoke it directly from a session before a fan-out whose difficulty is only known at runtime. Spawn it via the Agent tool with one spawn set:
+
+```text
+Route this spawn set.
+
+- id: doc-1
+  agent: documentation-writer
+  stage: mechanical
+  task: <<<TASK Fill the missing docstrings in src/billing/invoice.py (one file, 6 functions). TASK>>>
+
+- id: review-1
+  agent: code-reviewer
+  task: <<<TASK Review this diff: 9 files under src/auth/, rewriting session-token refresh and the middleware that validates tokens; includes a schema change to the sessions table. TASK>>>
+```
+
+It replies with one JSON object (`routes[]`, one entry per `id`, each with `baseline`, `model`, `effort`, `confidence`, `matched_rule`, `injection_suspected`, `rationale`). For each route, pass `model` to the Agent tool's `model` parameter when you spawn that agent; when the route says `inherit`, omit the parameter. Effort is advisory on the Agent-tool path (that tool has no effort parameter); Workflow scripts pass it through `opts.effort`. Treat the result as advisory: if the JSON does not parse or the model is more than one tier from the agent's frontmatter default, spawn on the default.
 
 ### Agent Design Principles
 
 - **Read-only agents** (reviewers, auditors) don't have Write or Edit tools — they can only analyze
 - **Cheaper models** (`model: sonnet`) are used for routine tasks; **stronger models** (`model: opus`) for high-stakes analysis
+- **Per-spawn routing:** the frontmatter `model` is the default; the `taskmaster` agent can route a specific spawn one tier up or down at runtime, and callers clamp its answer
 - Each agent has a focused persona and structured output format
 - **Model portability:** two agents in this library declare `model: fable`. If your Claude Code version does not accept that value, change it to `model: inherit` — the agent then runs on whatever model your session uses.
 
