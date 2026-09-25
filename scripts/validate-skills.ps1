@@ -5,8 +5,9 @@
 
 .DESCRIPTION
   This is the "unit test" for the skills half of the markdown-config repository.
-  It checks the canonical skills/<name>/SKILL.md tree and its mirrored install
-  tree .claude/skills/<name>/SKILL.md for:
+  It checks the canonical skills/Fable-5.1/<name>/SKILL.md tree (skills/Fable-5 is a
+  frozen snapshot, not validated) and its mirrored install tree
+  .claude/skills/<name>/SKILL.md for:
     (a) exactly the 7 expected skill directories exist on both sides, each with a SKILL.md
     (b) frontmatter parses between --- fences; non-empty name/description; name equals the
         directory name; description longer than 20 chars; disable-model-invocation: true
@@ -19,8 +20,8 @@
         and "Spawn a **name** agent" mentions
     (e) the 6 plan-producing skills reference the `plans/plan.<number>` path pattern and
         contain a heading line mentioning "Execution Prompt"
-    (f) byte-parity between skills/<name>/SKILL.md and .claude/skills/<name>/SKILL.md, with
-        orphan detection in both directions
+    (f) byte-parity between skills/Fable-5.1/<name>/SKILL.md and .claude/skills/<name>/SKILL.md,
+        with orphan detection in both directions
     (g) stale-shadow check: commands/ or .claude/commands/ must not still contain a .md file
         whose basename matches one of the 7 skill names (absent dirs pass)
     (h) named-agent enforcement for the three _sa skills: every subagent_type: line must
@@ -34,6 +35,11 @@
         starting at 1, the highest section must mention "Execution Prompt", and the count
         must match the expected total for that skill
     (k) drafting-token check: no literal `<placeholder` token anywhere in a SKILL.md
+    (l) feature-token check: plan and plan_sa must reference `plans/plan.<number>.diagram.html`;
+        the three _sa skills must carry `**subagent_type:** `taskmaster`` and the fallback
+        phrase "skip routing and spawn on frontmatter defaults"; and no backticked generic
+        type (`Explore`, `Plan`, `general-purpose`) may appear inside a `### Routing (optional)`
+        subsection (taskmaster has no generic fallback)
 
   Exits non-zero and prints a per-file, per-rule failure list on any violation.
 
@@ -43,13 +49,26 @@
   directory. Overridable so the ruleset can be exercised against known-bad fixtures (see
   test-validate-skills.ps1).
 
+.PARAMETER SkillsDir
+  The canonical skills tree to validate. Defaults to <RepoRoot>/skills/Fable-5.1. Point it
+  at a canonical tree together with -InstallSkillsDir to self-lint that tree before it is
+  mirrored into the live install (e.g. both set to skills/Fable-5.1).
+
+.PARAMETER InstallSkillsDir
+  The mirrored install tree. Defaults to <RepoRoot>/.claude/skills.
+
 .EXAMPLE
   powershell -File scripts/validate-skills.ps1
+
+.EXAMPLE
+  powershell -File scripts/validate-skills.ps1 -SkillsDir skills/Fable-5.1 -InstallSkillsDir skills/Fable-5.1
 #>
 
 [CmdletBinding()]
 param(
-    [string]$RepoRoot
+    [string]$RepoRoot,
+    [string]$SkillsDir,
+    [string]$InstallSkillsDir
 )
 
 Set-StrictMode -Version Latest
@@ -61,8 +80,8 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $RepoRoot) { $RepoRoot = Split-Path -Parent $scriptDir }
 
-$SkillsDir           = Join-Path $RepoRoot 'skills/Fable-5'
-$InstallSkillsDir    = Join-Path $RepoRoot '.claude/skills'
+if (-not $SkillsDir)        { $SkillsDir        = Join-Path $RepoRoot 'skills/Fable-5.1' }
+if (-not $InstallSkillsDir) { $InstallSkillsDir = Join-Path $RepoRoot '.claude/skills' }
 $AgentsDir           = Join-Path $RepoRoot 'agents/Fable-5.1'
 $CommandsDir         = Join-Path $RepoRoot 'commands'
 $InstallCommandsDir  = Join-Path $RepoRoot '.claude/commands'
@@ -86,6 +105,16 @@ $ExpectedSectionCounts = @{
     'test-review-plan_sa'  = 13
     'code-review-plan'     = 10
     'code-review-plan_sa'  = 12
+}
+
+# (l) user-requested features that a later edit must not silently drop: the diagram path in
+# the two planning skills, and the taskmaster routing spawn plus its no-generic-fallback phrase
+# in the three _sa skills.
+$RequiredFeatureTokens = @{
+    'plan'                 = @('plans/plan.<number>.diagram.html')
+    'plan_sa'              = @('plans/plan.<number>.diagram.html', '**subagent_type:** `taskmaster`', 'skip routing and spawn on frontmatter defaults')
+    'test-review-plan_sa'  = @('**subagent_type:** `taskmaster`', 'skip routing and spawn on frontmatter defaults')
+    'code-review-plan_sa'  = @('**subagent_type:** `taskmaster`', 'skip routing and spawn on frontmatter defaults')
 }
 
 $failures = New-Object System.Collections.Generic.List[string]
@@ -208,6 +237,22 @@ function Test-SkillFile {
     # --- (k) drafting-token check ---
     if ($raw.Contains('<placeholder')) {
         Add-Failure $Path "contains a literal '<placeholder' drafting token"
+    }
+
+    # --- (l) required feature tokens + no generic type inside the Routing subsection ---
+    if ($RequiredFeatureTokens.ContainsKey($DirName)) {
+        foreach ($t in $RequiredFeatureTokens[$DirName]) {
+            if (-not $body.Contains($t)) {
+                Add-Failure $Path "missing required feature token '$t'"
+            }
+        }
+    }
+    if ($DirName -like '*_sa') {
+        # From the "### Routing (optional)" heading line to the next ## / ### heading (or EOF).
+        $routingMatch = [regex]::Match($body, '(?ms)^###\s+Routing \(optional\).*?(?=^###?\s|\z)')
+        if ($routingMatch.Success -and ($routingMatch.Value -match '`Explore`|`Plan`|`general-purpose`')) {
+            Add-Failure $Path 'generic agent type referenced inside the Routing subsection (taskmaster has no generic fallback)'
+        }
     }
 
     # --- (d) phantom-agent check + (h) named-agent enforcement (subagent_type: lines) ---

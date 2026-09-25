@@ -16,8 +16,11 @@
       drifted mirror (byte mismatch), orphaned skill directory, a stale shadow
       command file, a missing Argument Safety guardrail sentence, a missing
       $ARGUMENTS reference, a too-short description, a missing "Execution Prompt"
-      heading, a broken fenced-template section sequence, and a phantom agent
-      reference in a domain-routing table row (roster/table phantom coverage).
+      heading, a broken fenced-template section sequence, a phantom agent
+      reference in a domain-routing table row (roster/table phantom coverage),
+      a missing diagram feature token, a missing routing-fallback feature token,
+      and a generic agent type referenced inside a "### Routing (optional)"
+      subsection.
 
   Exits 0 only if every assertion holds.
 #>
@@ -102,7 +105,7 @@ function Edit-BothTrees {
     # install trees of a case fixture, so the mutation doesn't itself trip the
     # byte-parity check (kept isolated to the rule under test).
     param([string]$CaseRoot, [string]$SkillName, [scriptblock]$Transform)
-    foreach ($rel in @("skills/Fable-5/$SkillName/SKILL.md", ".claude/skills/$SkillName/SKILL.md")) {
+    foreach ($rel in @("skills/Fable-5.1/$SkillName/SKILL.md", ".claude/skills/$SkillName/SKILL.md")) {
         $path = Join-Path $CaseRoot $rel
         $text = Get-FixtureText -Path $path
         $newText = & $Transform $text
@@ -221,6 +224,44 @@ Edit-BothTrees -CaseRoot $d -SkillName 'plan_sa' -Transform {
     return $text.Replace('| `database-architect` |', '| `totally-fake-agent` |')
 }
 Assert-Case -TestName 'phantom agent in domain-routing table row fires' -ExpectedCode 1 -ExpectedSubstring "phantom agent referenced in table row: 'totally-fake-agent'" -RepoRoot $d
+
+# --- T15: missing diagram feature token (rule l) ---
+$d = New-CaseFixture -CaseName 't15-missing-diagram-token'
+Edit-BothTrees -CaseRoot $d -SkillName 'plan' -Transform {
+    param($text)
+    if (-not $text.Contains('plans/plan.<number>.diagram.html')) {
+        throw 'anchor "plans/plan.<number>.diagram.html" not found in plan/SKILL.md for T15'
+    }
+    return $text.Replace('plans/plan.<number>.diagram.html', 'plans/plan.<number>.diagram.htm')
+}
+Assert-Case -TestName 'missing diagram feature token fires' -ExpectedCode 1 -ExpectedSubstring 'missing required feature token' -RepoRoot $d
+
+# --- T16: missing routing-fallback feature token (rule l). Also proves Edit-BothTrees
+# targets skills/Fable-5.1: a stale skills/Fable-5 path would leave the validated
+# canonical copy untouched and this case would fail to trip the check. ---
+$d = New-CaseFixture -CaseName 't16-missing-routing-fallback'
+Edit-BothTrees -CaseRoot $d -SkillName 'code-review-plan_sa' -Transform {
+    param($text)
+    if (-not $text.Contains('skip routing and spawn on frontmatter defaults')) {
+        throw 'anchor "skip routing and spawn on frontmatter defaults" not found in code-review-plan_sa/SKILL.md for T16'
+    }
+    return $text.Replace('skip routing and spawn on frontmatter defaults', 'skip it')
+}
+Assert-Case -TestName 'missing routing-fallback feature token fires' -ExpectedCode 1 -ExpectedSubstring 'missing required feature token' -RepoRoot $d
+
+# --- T17: generic agent type referenced inside the Routing subsection (rule l). Rule (h)
+# alone would pass this text, since "fall back" now appears in the same Fallback bullet
+# block — that is the point of the case: it exercises the Routing-subsection-specific
+# check, not the generic block-level fallback-justification check. ---
+$d = New-CaseFixture -CaseName 't17-generic-in-routing'
+Edit-BothTrees -CaseRoot $d -SkillName 'plan_sa' -Transform {
+    param($text)
+    if (-not $text.Contains('never substitute a generic router.')) {
+        throw 'anchor "never substitute a generic router." not found in plan_sa/SKILL.md for T17'
+    }
+    return $text.Replace('never substitute a generic router.', 'never substitute a generic router or fall back to `general-purpose`.')
+}
+Assert-Case -TestName 'generic agent type inside Routing subsection fires' -ExpectedCode 1 -ExpectedSubstring 'generic agent type referenced inside the Routing subsection' -RepoRoot $d
 
 # --- Report ---
 Write-Host ""
